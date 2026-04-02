@@ -60,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLayer = document.getElementById('content-modal');
     const btnDownload = document.getElementById('btn-download');
     const btnWatch = document.getElementById('btn-watch');
+    const images = galleryTrack.querySelectorAll('img');
+    const viewport = document.querySelector('.gallery-viewport');
 
     let currentIndex = 0;
     const totalSlides = indicators.length;
@@ -72,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     //  AUTO-SLIDE (setiap 4 detik)
     // ==========================================
-    const AUTO_SLIDE_INTERVAL = 4000;
+    const AUTO_SLIDE_INTERVAL = 2000;
     let autoSlideTimer = null;
 
     function startAutoSlide() {
@@ -111,6 +113,24 @@ document.addEventListener('DOMContentLoaded', () => {
         indicators[index].classList.add('active');
 
         currentIndex = index;
+        adjustGalleryHeight();
+    }
+
+    // Fungsi untuk menyesuaikan tinggi gallery secara dinamis
+    function adjustGalleryHeight() {
+        const activeImg = images[currentIndex];
+        if (activeImg) {
+            if (activeImg.complete && activeImg.naturalHeight > 0) {
+                viewport.style.height = `${activeImg.offsetHeight}px`;
+            } else {
+                // Jika belum load, tunggu sampai load
+                activeImg.onload = () => {
+                   if (currentIndex === Array.from(images).indexOf(activeImg)) {
+                       viewport.style.height = `${activeImg.offsetHeight}px`;
+                   }
+                };
+            }
+        }
     }
 
     // ==========================================
@@ -240,14 +260,17 @@ document.addEventListener('DOMContentLoaded', () => {
         resetAutoSlide();
     }
 
-    // Cegah image dragging bawaan browser agar swipe lancar
-    const images = galleryTrack.querySelectorAll('img');
-    images.forEach(img => {
-        img.addEventListener('dragstart', (e) => e.preventDefault());
-    });
-
     // Mulai auto-slide saat halaman dimuat
     startAutoSlide();
+
+    // Inisialisasi tinggi pertama kali & saat resize
+    window.addEventListener('load', adjustGalleryHeight);
+    window.addEventListener('resize', adjustGalleryHeight);
+
+    // Pastikan semua gambar sudah dimonitor untuk penyesuaian tinggi jika load lambat
+    images.forEach(img => {
+        img.addEventListener('load', adjustGalleryHeight);
+    });
 
     // ==========================================
     //  RANDOM LINK UNTUK TOMBOL VERIFYING
