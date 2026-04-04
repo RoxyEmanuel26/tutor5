@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnWatch = document.getElementById('btn-watch');
     const images = galleryTrack.querySelectorAll('img');
     const viewport = document.querySelector('.gallery-viewport');
+    const cardFeatured = document.querySelector('.card-featured');
 
     let currentIndex = 0;
     const totalSlides = indicators.length;
@@ -113,24 +114,65 @@ document.addEventListener('DOMContentLoaded', () => {
         indicators[index].classList.add('active');
 
         currentIndex = index;
-        adjustGalleryHeight();
+        adjustGalleryDimensions();
     }
 
-    // Fungsi untuk menyesuaikan tinggi gallery secara dinamis
-    function adjustGalleryHeight() {
+    // Fungsi untuk menyesuaikan tinggi dan lebar gallery secara dinamis
+    function adjustGalleryDimensions() {
         const activeImg = images[currentIndex];
-        if (activeImg) {
+        if (activeImg && cardFeatured) {
             if (activeImg.complete && activeImg.naturalHeight > 0) {
-                viewport.style.height = `${activeImg.offsetHeight}px`;
+                applyDimensions(activeImg);
             } else {
                 // Jika belum load, tunggu sampai load
                 activeImg.onload = () => {
                    if (currentIndex === Array.from(images).indexOf(activeImg)) {
-                       viewport.style.height = `${activeImg.offsetHeight}px`;
+                       applyDimensions(activeImg);
                    }
                 };
             }
         }
+    }
+
+    function applyDimensions(img) {
+        const maxModalWidth = 480; 
+        const padding = window.innerWidth <= 640 ? 40 : 48; // padding of card-featured
+        
+        let targetWidth = img.naturalWidth;
+        let targetHeight = img.naturalHeight;
+        
+        if (!targetWidth || !targetHeight) {
+            targetWidth = maxModalWidth;
+            targetHeight = maxModalWidth * (10 / 16);
+        }
+        
+        let maxAllowedHeight = window.innerHeight * 0.6;
+        if (maxAllowedHeight < 200) maxAllowedHeight = 200;
+        
+        let maxAllowedWidth = Math.min(maxModalWidth, window.innerWidth) - padding;
+        
+        if (targetHeight > maxAllowedHeight) {
+            const ratio = maxAllowedHeight / targetHeight;
+            targetHeight = maxAllowedHeight;
+            targetWidth *= ratio;
+        }
+        
+        if (targetWidth > maxAllowedWidth) {
+            const ratio = maxAllowedWidth / targetWidth;
+            targetWidth = maxAllowedWidth;
+            targetHeight *= ratio;
+        }
+        
+        const minImgWidth = 240; 
+        if (targetWidth < minImgWidth) {
+            const ratio = minImgWidth / targetWidth;
+            targetWidth = minImgWidth;
+            targetHeight *= ratio;
+        }
+        
+        cardFeatured.style.width = `${targetWidth + padding}px`;
+        cardFeatured.style.maxWidth = `100%`; 
+        viewport.style.height = `${targetHeight}px`;
     }
 
     // ==========================================
@@ -264,12 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
     startAutoSlide();
 
     // Inisialisasi tinggi pertama kali & saat resize
-    window.addEventListener('load', adjustGalleryHeight);
-    window.addEventListener('resize', adjustGalleryHeight);
+    window.addEventListener('load', adjustGalleryDimensions);
+    window.addEventListener('resize', adjustGalleryDimensions);
 
     // Pastikan semua gambar sudah dimonitor untuk penyesuaian tinggi jika load lambat
     images.forEach(img => {
-        img.addEventListener('load', adjustGalleryHeight);
+        img.addEventListener('load', adjustGalleryDimensions);
     });
 
     // ==========================================
